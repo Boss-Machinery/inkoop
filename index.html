@@ -1345,15 +1345,26 @@
 function getCountryFlagHtml(locStr) {
             if (!locStr) return '📍 <span>Onbekend</span>';
             
-            let cleanLocStr = locStr.replace(/^[📍\s]+/, '');
-            let l = cleanLocStr.toLowerCase().trim();
+            let cleanLocStr = locStr.replace(/^[📍\s🏢]+/, '').trim();
             
-            // Uitgebreide mapping van zowel 2-letterige, 3-letterige (ISO) als volledige landnamen naar vlaggen-codes
+            // Uitgebreide wereldwijde mapping (3-letterige ISO, 2-letterige ISO en volledige namen in NL en EN)
             const worldCountries = {
                 // Noord-Amerika
-                'can': 'ca', 'canada': 'ca',
-                'usa': 'us', 'usm': 'us', 'united states': 'us', 'verenigde staten': 'us',
-                'mex': 'mx', 'mexico': 'mx',
+                'can': 'ca', 'ca': 'ca', 'canada': 'ca',
+                'usa': 'us', 'usm': 'us', 'us': 'us', 'united states': 'us', 'verenigde staten': 'us',
+                'mex': 'mx', 'mx': 'mx', 'mexico': 'mx',
+
+                // Latijns-Amerika & Caribisch gebied
+                'arg': 'ar', 'ar': 'ar', 'argentina': 'ar', 'argentinië': 'ar',
+                'bra': 'br', 'br': 'br', 'brazil': 'br', 'brazilië': 'br',
+                'chl': 'cl', 'cl': 'cl', 'chile': 'cl', 'chili': 'cl',
+                'col': 'co', 'co': 'co', 'colombia': 'co',
+                'per': 'pe', 'pe': 'pe', 'peru': 'pe',
+                'ury': 'uy', 'uy': 'uy', 'uruguay': 'uy',
+                'ven': 've', 've': 've', 'venezuela': 've',
+                'cri': 'cr', 'cr': 'cr', 'costa rica': 'cr',
+                'pan': 'pa', 'pa': 'pa', 'panama': 'pa',
+                'dom': 'do', 'do': 'do', 'dominican republic': 'do', 'dominikaanse republiek': 'do',
 
                 // Europa
                 'nld': 'nl', 'nl': 'nl', 'nederland': 'nl', 'netherlands': 'nl', 'holland': 'nl',
@@ -1388,40 +1399,51 @@ function getCountryFlagHtml(locStr) {
                 'ukr': 'ua', 'ua': 'ua', 'oekraïne': 'ua', 'ukraine': 'ua',
                 'tur': 'tr', 'tr': 'tr', 'turkije': 'tr', 'turkey': 'tr',
                 'rus': 'ru', 'ru': 'ru', 'rusland': 'ru', 'russia': 'ru',
+                'srb': 'rs', 'rs': 'rs', 'servië': 'rs', 'serbia': 'rs',
+                'bih': 'ba', 'ba': 'ba', 'bosnië en herzegovina': 'ba', 'bosnia': 'ba',
 
-                // Azië & Oceanië
+                // Azië & Midden-Oosten
+                'phl': 'ph', 'ph': 'ph', 'philippines': 'ph', 'filipijnen': 'ph',
+                'idn': 'id', 'id': 'id', 'indonesia': 'id', 'indonesië': 'id',
+                'ind': 'in', 'in': 'in', 'india': 'in',
                 'chn': 'cn', 'cn': 'cn', 'china': 'cn',
                 'jpn': 'jp', 'jp': 'jp', 'japan': 'jp',
                 'kor': 'kr', 'kr': 'kr', 'zuid-korea': 'kr', 'south korea': 'kr',
+                'vnm': 'vn', 'vn': 'vn', 'vietnam': 'vn',
+                'tha': 'th', 'th': 'th', 'thailand': 'th',
+                'mys': 'my', 'my': 'my', 'maleisië': 'my', 'malaysia': 'my',
+                'sgp': 'sg', 'sg': 'sg', 'singapore': 'sg',
+                'are': 'ae', 'ae': 'ae', 'verenigde arabische emiraten': 'ae', 'uae': 'ae', 'dubai': 'ae',
+                'sau': 'sa', 'sa': 'sa', 'saudi-arabië': 'sa', 'saudi arabia': 'sa',
+                'isr': 'il', 'il': 'il', 'israël': 'il', 'israel': 'il',
+
+                // Oceanië & Afrika
                 'aus': 'au', 'au': 'au', 'australië': 'au', 'australia': 'au',
                 'nzl': 'nz', 'nz': 'nz', 'nieuwe-zeeland': 'nz', 'new zealand': 'nz',
-                'are': 'ae', 'ae': 'ae', 'verenigde arabische emiraten': 'ae', 'uae': 'ae',
-
-                // Latijns-Amerika & Afrika
-                'bra': 'br', 'br': 'br', 'brazilië': 'br', 'brazil': 'br',
-                'arg': 'ar', 'ar': 'ar', 'argentinië': 'ar', 'argentina': 'ar',
-                'chl': 'cl', 'cl': 'cl', 'chili': 'cl', 'chile': 'cl',
-                'col': 'co', 'co': 'co', 'colombia': 'co',
-                'zaf': 'za', 'za': 'za', 'zuid-afrika': 'za', 'south africa': 'za'
+                'zaf': 'za', 'za': 'za', 'zuid-afrika': 'za', 'south africa': 'za',
+                'egy': 'eg', 'eg': 'eg', 'egypte': 'eg', 'egypt': 'eg',
+                'mar': 'ma', 'ma': 'ma', 'marokko': 'ma', 'morocco': 'ma'
             };
 
             let countryCode = '';
             
-            // 1. Directe match op hele string of losse woorden in de locatie-string
-            const words = l.split(/[\s,\-\/]+/);
+            // Splits de locatie op komma's, slash of streepjes (bijv. "Clarksville, AR, USA" of "Manila, PHL")
+            let parts = cleanLocStr.split(/[,–\/-]+/);
             
-            // Check of een van de woorden exact in onze lijst staat (bijv. 'can', 'usa', 'ita')
-            for (let word of words) {
-                if (worldCountries[word]) {
-                    countryCode = worldCountries[word];
+            // Zoek van ACHTEREN naar VOREN (aangezien het land bij veilingen bijna altijd achteraan staat)
+            for (let i = parts.length - 1; i >= 0; i--) {
+                let token = parts[i].trim().toLowerCase();
+                if (worldCountries[token]) {
+                    countryCode = worldCountries[token];
                     break;
                 }
             }
             
-            // 2. Als we via losse woorden niets vinden, check of de volledige string een landnaam bevat
+            // Mocht dat door een afwijkende indeling niets opleveren, doorzoek dan de hele string
             if (!countryCode) {
+                let lLower = cleanLocStr.toLowerCase();
                 for (const [name, code] of Object.entries(worldCountries)) {
-                    if (l.includes(name)) {
+                    if (lLower.includes(name)) {
                         countryCode = code;
                         break;
                     }
