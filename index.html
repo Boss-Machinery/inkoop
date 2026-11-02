@@ -1492,12 +1492,13 @@ function getCountryFlagHtml(locStr) {
             if (diff <= 0) return { boxText: 'Veiling afgelopen', imageBadge: 'AFGELOPEN', isUrgent: false, isExpired: true };
             
             const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const totalHours = Math.floor(diff / (1000 * 60 * 60)); // Totaal aantal uren tot de deadline
             const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
             const minutes = Math.floor((diff / 1000 / 60) % 60);
             const seconds = Math.floor((diff / 1000) % 60);
             const pad = (n) => String(n).padStart(2, '0');
             
-            let timeStrUpper = days > 0 ? `⏱ ${days}D ${pad(hours)}U ${pad(minutes)}M ${pad(seconds)}S` : `⚠️ ${pad(hours)}U ${pad(minutes)}M ${pad(seconds)}S`;
+            let timeStrUpper = totalHours > 0 ? `⏱ ${days > 0 ? days + 'd ' : ''}${pad(hours)}U ${pad(minutes)}M ${pad(seconds)}S` : `⚠️ ${pad(hours)}U ${pad(minutes)}M ${pad(seconds)}S`;
 
             const d = pad(end.getDate());
             const m = pad(end.getMonth() + 1);
@@ -1505,7 +1506,8 @@ function getCountryFlagHtml(locStr) {
             const H = pad(end.getHours());
             const M = pad(end.getMinutes());
             
-            if (days < 2) {
+            // Aangepast: pas urgent/bijna afgelopen bij 3 uur of minder te gaan
+            if (totalHours <= 3) {
                 return { boxText: `⚠️ Nog ${days > 0 ? days + 'd ' : ''}${pad(hours)}u ${pad(minutes)}m ${pad(seconds)}s`, imageBadge: timeStrUpper, isUrgent: true, isExpired: false };
             }
             return { boxText: `Veiling op: ${d}-${m}-${y} om ${H}:${M}`, imageBadge: timeStrUpper, isUrgent: false, isExpired: false };
